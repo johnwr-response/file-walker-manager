@@ -30,10 +30,10 @@ public class FileWalkerJobProducer {
     public void pushJobsToWalkers() {
         jmsTemplate.setPubSubDomain(true);
         fileStoreRepository.findAll().forEach(fileStore -> {
-            log.info("Test : {}, {}, {}", fileStore.getNickname(), fileStore.getLatestRefresh(), responseWalkerStatusProperties.getGlobalStoreRefreshMinutes());
+            log.debug("Test : {}, {}, {}", fileStore.getNickname(), fileStore.getLatestRefresh(), responseWalkerStatusProperties.getGlobalStoreRefreshMinutes());
             if ((fileStore.getLatestRefresh()==null ? LocalDateTime.MIN : fileStore.getLatestRefresh()).isBefore(LocalDateTime.now().minusMinutes(responseWalkerStatusProperties.getGlobalStoreRefreshMinutes()))) {
                 StatusWalker availableWalker = statusWalkerRepository.findFirstByFileStoreIdAndReadyIsTrue(fileStore.getId());
-                log.info("Available Walker for {}: {}", fileStore.getNickname(), availableWalker);
+                log.info("Send job to available walker for {}: {}", fileStore.getNickname(), availableWalker.getWalkerInstanceToken());
                 jmsTemplate.convertAndSend(JmsConfig.FILE_STORE_WALKER_JOB_TOPIC,
                         WalkerJobDto.builder()
                                 .walkerInstanceToken(availableWalker.getWalkerInstanceToken())
